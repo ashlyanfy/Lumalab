@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* LumaLab palette (from landing styles.css) */
+  --color-brand-50: #eaf4fc;
+  --color-brand-100: #d1e6f7;
+  --color-brand-200: #a8d0ee;
+  --color-brand-300: #6cb0e0;
+  --color-brand-400: #2fa8d7;
+  --color-brand-500: #1f8cbe;
+  --color-brand-600: #075ea8;
+  --color-brand-700: #063b66;
+  --color-brand-800: #052c4d;
+  --color-brand-900: #0a2138;
+
+  --color-cyan-400: #2fa8d7;
+  --color-cyan-500: #1c92c2;
+
+  --color-ink: #0a2138;
+  --color-paper: #f7fbff;
+
+  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --radius-card: 30px;
+  --radius-card-lg: 38px;
+}
+
+/* ── Hard reset to avoid Tailwind v4 / browser quirks ── */
+html {
+  height: auto;
+  margin: 0;
+  padding: 0;
+  background: #f7fbff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: block;
+  /* Critical: lets ambient-glow pseudos with z-index:-1 sit above body bg but below content */
+  isolation: isolate;
+  color: #0a2138;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(ellipse at 100% -10%, rgba(47, 168, 215, 0.18), transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(7, 94, 168, 0.10), transparent 55%),
+    linear-gradient(180deg, #eaf4fc 0%, #f1f8fd 45%, #f7fbff 100%);
+  background-attachment: fixed;
+}
+
+/* Ambient glow orbs (match landing aesthetic — soft cyan/blue fog, not clouds) */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+body::before {
+  top: -160px;
+  right: -120px;
+  width: 540px;
+  height: 540px;
+  background: radial-gradient(circle, rgba(47, 168, 215, 0.55), transparent 70%);
+  animation: orb-drift 18s ease-in-out infinite alternate;
+}
+
+body::after {
+  bottom: -180px;
+  left: -140px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(7, 94, 168, 0.45), transparent 70%);
+  animation: orb-drift-slow 24s ease-in-out infinite alternate;
+}
+
+@keyframes orb-drift {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(-40px, 40px); }
+}
+
+@keyframes orb-drift-slow {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(40px, -30px); }
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #063b66 0%, #075ea8 60%, #2fa8d7 100%);
+}
+
+.brand-gradient-text {
+  background: linear-gradient(135deg, #063b66 0%, #075ea8 50%, #2fa8d7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes save-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(47, 168, 215, 0.55), 0 14px 28px rgba(47, 168, 215, 0.30);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(47, 168, 215, 0), 0 18px 36px rgba(47, 168, 215, 0.45);
+    transform: scale(1.03);
+  }
+}
+
+.save-glow {
+  animation: save-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none; }
+  .save-glow { animation: none; }
+}
