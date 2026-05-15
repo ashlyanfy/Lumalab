@@ -87,14 +87,14 @@ export function UsersView() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 lg:px-8 lg:py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-400">
-            LumaLab
-          </p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-700 lg:text-4xl">
-            {t("users")}
-          </h1>
-          <p className="mt-1 text-sm text-brand-700/60">{t("usersSubtitle")}</p>
+        <div className="flex items-center gap-4">
+          <img src="/lumalab-mark.png" alt="LumaLab" className="h-12 w-auto" draggable={false} />
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-brand-700 lg:text-4xl">
+              {t("users")}
+            </h1>
+            <p className="mt-1 text-sm text-brand-700/60">{t("usersSubtitle")}</p>
+          </div>
         </div>
         <Button size="sm" onClick={() => setDraft({ ...empty })}>
           <UserPlus size={14} />

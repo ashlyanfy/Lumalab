@@ -98,3 +98,29 @@ export interface LeadStats {
   byStatus: Record<LeadStatus, number>;
   last7: number;
 }
+
+export interface CmsBlock {
+  id: number;
+  type: string;
+  order: number;
+  enabled: boolean;
+  data: Record<string, unknown>;
+}
+
+export interface CmsSeo {
+  id: number;
+  pageId: number;
+  title: string;
+  description: string;
+  keywords: string | null;
+  ogImage: string | null;
+}
+
+export interface CmsPage {
+  id: number;
+  slug: string;
+  title: string;
+  updatedAt: string;
+  blocks?: CmsBlock[];
+  seo?: CmsSeo | null;
+}

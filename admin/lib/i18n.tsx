@@ -45,6 +45,13 @@ const dict = {
   toDate: { en: "To", ru: "По" },
   refresh: { en: "Refresh", ru: "Обновить" },
   exportExcel: { en: "Export to Excel", ru: "Экспорт в Excel" },
+  exportHint: {
+    en: "Pick a date range and optional filters.",
+    ru: "Выбери диапазон дат и фильтры.",
+  },
+  exportQuick: { en: "Quick range", ru: "Быстрый период" },
+  exportLastN: { en: "Last {n} days", ru: "{n} дней" },
+  exportAllTime: { en: "All time", ru: "Всё время" },
   resetFilters: { en: "Reset", ru: "Сбросить" },
 
   kind_COMPANY: { en: "Company", ru: "Компания" },
@@ -128,11 +135,70 @@ const dict = {
     ru: "Уведомления и интеграции появятся здесь на 2 дне.",
   },
 
-  // Dashboard skeleton
+  // Dashboard
   dashboard: { en: "Dashboard", ru: "Главная" },
   dashboardSoon: {
     en: "Charts and KPIs will appear here once leads start coming in.",
     ru: "Графики и KPI появятся здесь, когда пойдут заявки.",
+  },
+  dailyTitle: { en: "Applications — last 14 days", ru: "Заявки — последние 14 дней" },
+  dailySubtitle: {
+    en: "Inbound submissions per day.",
+    ru: "Заявки за день.",
+  },
+  last7days: { en: "Last 7 days", ru: "За 7 дней" },
+  noData: { en: "No data yet.", ru: "Пока нет данных." },
+
+  // Pages / CMS
+  pages: { en: "Site content", ru: "Контент сайта" },
+  pagesSubtitle: {
+    en: "Edit landing-page blocks and SEO.",
+    ru: "Редактирование блоков лендинга и SEO.",
+  },
+  pageSlug: { en: "Slug", ru: "Slug" },
+  pageTitle: { en: "Title", ru: "Заголовок" },
+  noPages: { en: "No pages yet. Create one to start editing.", ru: "Пока нет страниц. Создай первую." },
+  newPage: { en: "New page", ru: "Новая страница" },
+  blocks: { en: "Blocks", ru: "Блоки" },
+  addBlock: { en: "Add block", ru: "Добавить блок" },
+  blockType: { en: "Type", ru: "Тип" },
+  enabled: { en: "Enabled", ru: "Включён" },
+  disabled: { en: "Disabled", ru: "Выключен" },
+  moveUp: { en: "Move up", ru: "Выше" },
+  moveDown: { en: "Move down", ru: "Ниже" },
+  deleteBlock: { en: "Delete block", ru: "Удалить блок" },
+  noBlocks: { en: "No blocks yet.", ru: "Пока нет блоков." },
+
+  // SEO
+  seo: { en: "SEO", ru: "SEO" },
+  seoSubtitle: {
+    en: "Meta tags and Open Graph.",
+    ru: "Мета-теги и Open Graph.",
+  },
+  seoTitle: { en: "Meta title", ru: "Meta title" },
+  seoDescription: { en: "Meta description", ru: "Meta description" },
+  seoKeywords: { en: "Keywords", ru: "Ключевые слова" },
+  seoOgImage: { en: "OG image URL", ru: "OG image URL" },
+  preview: { en: "Preview", ru: "Превью" },
+
+  // Settings (push + channels)
+  notifications: { en: "Notifications", ru: "Уведомления" },
+  pushOn: { en: "Push notifications on", ru: "Push-уведомления включены" },
+  pushOff: { en: "Push notifications off", ru: "Push-уведомления выключены" },
+  enablePush: { en: "Enable push", ru: "Включить push" },
+  disablePush: { en: "Disable push", ru: "Выключить push" },
+  testPush: { en: "Send test push", ru: "Отправить тест" },
+  pushUnsupported: {
+    en: "Push notifications are not supported on this browser.",
+    ru: "Push в этом браузере не поддерживается.",
+  },
+  pushDenied: {
+    en: "Notifications are blocked. Allow them in browser settings.",
+    ru: "Уведомления заблокированы в браузере.",
+  },
+  pushNotConfigured: {
+    en: "VAPID keys are not configured on the backend.",
+    ru: "VAPID-ключи не настроены на бэкенде.",
   },
 } as const;
 

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, RefreshCw, Search as SearchIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, RefreshCw, Search as SearchIcon } from "lucide-react";
+import { ExportModal } from "@/components/export-modal";
 import { api } from "@/lib/api";
 import { useLang } from "@/lib/i18n";
 import type {
@@ -47,6 +48,7 @@ export function LeadsView() {
   const [from, setFrom] = useState(searchParams.get("from") ?? "");
   const [to, setTo] = useState(searchParams.get("to") ?? "");
   const [page, setPage] = useState(Number(searchParams.get("page") ?? 1));
+  const [exportOpen, setExportOpen] = useState(false);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -76,25 +78,37 @@ export function LeadsView() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8 lg:py-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-400">
-            LumaLab
-          </p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-700 lg:text-4xl">
-            {t("leads")}
-          </h1>
-          <p className="mt-1 text-sm text-brand-700/60">{t("leadsSubtitle")}</p>
+        <div className="flex items-center gap-4">
+          <img src="/lumalab-mark.png" alt="LumaLab" className="h-12 w-auto" draggable={false} />
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-brand-700 lg:text-4xl">
+              {t("leads")}
+            </h1>
+            <p className="mt-1 text-sm text-brand-700/60">{t("leadsSubtitle")}</p>
+          </div>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => query.refetch()}
-          disabled={query.isFetching}
-        >
-          <RefreshCw size={14} className={query.isFetching ? "animate-spin" : ""} />
-          {t("refresh")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => query.refetch()}
+            disabled={query.isFetching}
+          >
+            <RefreshCw size={14} className={query.isFetching ? "animate-spin" : ""} />
+            {t("refresh")}
+          </Button>
+          <Button size="sm" onClick={() => setExportOpen(true)}>
+            <Download size={14} />
+            {t("exportExcel")}
+          </Button>
+        </div>
       </div>
+
+      <ExportModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        defaults={{ kind, status, from, to }}
+      />
 
       {/* Filters */}
       <div className="mb-6 rounded-[26px] border border-[rgba(8,80,135,0.08)] bg-white/85 p-5 shadow-[0_18px_44px_rgba(8,80,135,0.08)] backdrop-blur-xl">

@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { LeadKind, LeadStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../notifications/push.service';
+import { TelegramService } from '../notifications/telegram.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { ListLeadsDto } from './dto/list-leads.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
@@ -19,7 +21,11 @@ export interface CreateLeadContext {
 export class LeadsService {
   private readonly logger = new Logger(LeadsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly telegram: TelegramService,
+    private readonly push: PushService,
+  ) {}
 
   async create(dto: CreateLeadDto, ctx: CreateLeadContext) {
     if (dto.botField && dto.botField.length > 0) {
@@ -59,7 +65,12 @@ export class LeadsService {
 
     this.logger.log(`Lead created #${lead.id} (${lead.kind}) from ${lead.email}`);
 
-    // Day 2: fire-and-forget telegram/push will go here.
+    this.telegram
+      .sendNewLead(lead)
+      .catch((e) => this.logger.warn(`telegram failed: ${String(e)}`));
+    this.push
+      .sendNewLead(lead)
+      .catch((e) => this.logger.warn(`push failed: ${String(e)}`));
 
     return { ok: true, id: lead.id };
   }

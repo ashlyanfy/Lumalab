@@ -12,6 +12,8 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "seed": "ts-node prisma/seed.ts",
+    "seed:cms": "ts-node prisma/seed-cms.ts",
+    "vapid": "ts-node scripts/generate-vapid.ts",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -29,6 +31,7 @@
     "class-validator": "^0.15.1",
     "dayjs": "^1.11.20",
     "exceljs": "^4.4.0",
+    "iterare": "^1.2.1",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.7",
     "passport": "^0.7.0",

@@ -3,24 +3,23 @@ import { cn } from "@/lib/utils";
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   className?: string;
+  variant?: "full" | "mark";
 }
 
-const sizeClass: Record<NonNullable<LogoProps["size"]>, string> = {
-  sm: "text-lg",
-  md: "text-2xl",
-  lg: "text-4xl",
+const heightClass: Record<NonNullable<LogoProps["size"]>, string> = {
+  sm: "h-7",
+  md: "h-9",
+  lg: "h-12",
 };
 
-export function Logo({ size = "md", className }: LogoProps) {
+export function Logo({ size = "md", className, variant = "full" }: LogoProps) {
+  const src = variant === "mark" ? "/lumalab-mark.png" : "/lumalab-logo.png";
   return (
-    <span
-      className={cn(
-        "font-black tracking-tight brand-gradient-text",
-        sizeClass[size],
-        className,
-      )}
-    >
-      LumaLab
-    </span>
+    <img
+      src={src}
+      alt="LumaLab"
+      className={cn("w-auto select-none", heightClass[size], className)}
+      draggable={false}
+    />
   );
 }
