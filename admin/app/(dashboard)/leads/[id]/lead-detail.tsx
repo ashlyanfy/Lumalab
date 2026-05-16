@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
-import { api } from "@/lib/api";
+import { ArrowLeft, Download, Mail, MessageCircle, Phone } from "lucide-react";
+import { useState } from "react";
+import { api, downloadFile } from "@/lib/api";
+import { Button } from "@/components/button";
 import { useLang } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import type { Lead } from "@/lib/types";
@@ -11,6 +13,34 @@ import { KindBadge, StatusBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-select";
 import { AssigneeSelect } from "@/components/assignee-select";
 import { NotesPanel } from "@/components/notes-panel";
+
+function ExportLeadButton({ leadId }: { leadId: string }) {
+  const { lang } = useLang();
+  const [busy, setBusy] = useState(false);
+  async function handle() {
+    setBusy(true);
+    try {
+      await downloadFile(
+        `/leads/${leadId}/export`,
+        `lumalab-lead-${leadId.slice(0, 8)}.xlsx`,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Button onClick={handle} disabled={busy} size="sm" variant="secondary">
+      <Download size={14} />
+      {busy
+        ? lang === "ru"
+          ? "Скачиваем…"
+          : "Downloading…"
+        : lang === "ru"
+          ? "Скачать Excel"
+          : "Download Excel"}
+    </Button>
+  );
+}
 
 function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
@@ -123,6 +153,7 @@ export function LeadDetail({ id }: { id: string }) {
           <div className="flex flex-col items-end gap-3">
             <StatusSelect leadId={lead.id} current={lead.status} />
             <AssigneeSelect leadId={lead.id} current={lead.assigneeId} />
+            <ExportLeadButton leadId={lead.id} />
           </div>
         </div>
       </div>

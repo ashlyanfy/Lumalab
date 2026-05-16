@@ -43,6 +43,8 @@ const dict = {
   filterAll: { en: "All", ru: "Все" },
   fromDate: { en: "From", ru: "С" },
   toDate: { en: "To", ru: "По" },
+  pickFromDate: { en: "Pick start date", ru: "Выбрать дату с" },
+  pickToDate: { en: "Pick end date", ru: "Выбрать дату по" },
   refresh: { en: "Refresh", ru: "Обновить" },
   exportExcel: { en: "Export to Excel", ru: "Экспорт в Excel" },
   exportHint: {

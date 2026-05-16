@@ -170,18 +170,28 @@ export function LeadsView() {
               </option>
             ))}
           </Select>
-          <Input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            aria-label={t("fromDate")}
-          />
-          <Input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            aria-label={t("toDate")}
-          />
+          <label className="grid gap-1">
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-700/60">
+              {t("pickFromDate")}
+            </span>
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              aria-label={t("pickFromDate")}
+            />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-700/60">
+              {t("pickToDate")}
+            </span>
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              aria-label={t("pickToDate")}
+            />
+          </label>
         </div>
         <div className="mt-3 flex justify-end">
           <Button variant="ghost" size="sm" onClick={resetFilters}>

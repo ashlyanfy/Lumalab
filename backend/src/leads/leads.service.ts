@@ -186,10 +186,23 @@ export class LeadsService {
     return lead;
   }
 
-  async update(id: string, dto: UpdateLeadDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateLeadDto, actorId?: string) {
+    const existing = await this.findOne(id);
     const data: Prisma.LeadUpdateInput = {};
-    if (dto.status !== undefined) data.status = dto.status;
+
+    // Auto-assign: when someone changes the STATUS and the lead has no
+    // assignee yet, attribute it to the actor automatically.
+    // Manager opens lead → changes status → their name appears.
+    // Untouched leads stay "Unassigned".
+    if (dto.status !== undefined && dto.status !== existing.status) {
+      data.status = dto.status;
+      if (!existing.assigneeId && actorId && dto.assigneeId === undefined) {
+        data.assignee = { connect: { id: actorId } };
+      }
+    } else if (dto.status !== undefined) {
+      data.status = dto.status;
+    }
+
     if (dto.assigneeId !== undefined) {
       if (!dto.assigneeId) {
         data.assignee = { disconnect: true };
@@ -197,6 +210,7 @@ export class LeadsService {
         data.assignee = { connect: { id: dto.assigneeId } };
       }
     }
+
     return this.prisma.lead.update({
       where: { id },
       data,
@@ -266,14 +280,18 @@ export class LeadsService {
     };
   }
 
-  async daily(days: number) {
+  async daily(days: number, status?: LeadStatus, kind?: LeadKind) {
     const clamped = Math.min(60, Math.max(7, days));
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - (clamped - 1));
 
+    const where: Prisma.LeadWhereInput = { createdAt: { gte: start } };
+    if (status) where.status = status;
+    if (kind) where.kind = kind;
+
     const rows = await this.prisma.lead.findMany({
-      where: { createdAt: { gte: start } },
+      where,
       select: { createdAt: true },
     });
 
