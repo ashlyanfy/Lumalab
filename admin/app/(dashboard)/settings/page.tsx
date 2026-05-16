@@ -71,40 +71,48 @@ export default function SettingsPage() {
   }, []);
 
   async function enable() {
-    setBusy(true);
     setMsg(null);
     setStep(null);
+
+    // CRITICAL: ask permission FIRST, synchronously after click,
+    // before any await — otherwise Chrome loses the user-gesture context
+    // and delays the prompt for seconds.
+    console.log("[push] step 1: requestPermission (must be sync after click)");
+    let permission: NotificationPermission;
     try {
-      // 1. Register / get SW
+      permission = await Notification.requestPermission();
+    } catch (e) {
+      console.error("[push] requestPermission failed", e);
+      setMsg(e instanceof Error ? `${e.name}: ${e.message}` : String(e));
+      return;
+    }
+    console.log("[push] permission:", permission);
+
+    if (permission !== "granted") {
+      setStage(permission === "denied" ? "denied" : "off");
+      if (permission === "default") {
+        setMsg("Вы закрыли диалог не дав разрешение.");
+      }
+      return;
+    }
+
+    // Now the slow async work — permission is granted, we can safely await.
+    setBusy(true);
+    try {
       setStep("Регистрируем service worker…");
-      console.log("[push] step 1: register SW");
+      console.log("[push] step 2: register SW");
       let reg = await navigator.serviceWorker.getRegistration();
       if (!reg) {
         reg = await navigator.serviceWorker.register("/sw.js");
       }
-      // 2. Wait until SW is active (subscribe needs activated SW)
+
       setStep("Активируем service worker…");
-      console.log("[push] step 2: wait for active SW");
+      console.log("[push] step 3: wait for active SW");
       if (!reg.active) {
         await navigator.serviceWorker.ready;
         reg = (await navigator.serviceWorker.getRegistration()) ?? reg;
       }
 
-      // 3. Ask permission
-      setStep("Запрашиваем разрешение…");
-      console.log("[push] step 3: ask permission");
-      const permission = await Notification.requestPermission();
-      console.log("[push] permission:", permission);
-      if (permission !== "granted") {
-        setStage(permission === "denied" ? "denied" : "off");
-        setStep(null);
-        if (permission === "default") {
-          setMsg("Вы закрыли диалог не дав разрешение.");
-        }
-        return;
-      }
-
-      // 4. Subscribe
       setStep("Подписываемся на push…");
       console.log("[push] step 4: pushManager.subscribe");
       const sub = await reg.pushManager.subscribe({
@@ -113,7 +121,6 @@ export default function SettingsPage() {
       });
       console.log("[push] subscription created:", sub.endpoint);
 
-      // 5. Save to backend
       setStep("Сохраняем подписку на сервере…");
       console.log("[push] step 5: POST /push/subscribe");
       const raw = sub.toJSON();
