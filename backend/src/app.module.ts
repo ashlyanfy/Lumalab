@@ -8,6 +8,7 @@ import { CmsModule } from './cms/cms.module';
 import { LeadsModule } from './leads/leads.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     CmsModule,
     NotificationsModule,
+    SettingsModule,
     BootstrapModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

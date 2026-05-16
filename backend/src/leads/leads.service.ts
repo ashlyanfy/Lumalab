@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { LeadKind, LeadStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../notifications/email.service';
 import { PushService } from '../notifications/push.service';
 import { TelegramService } from '../notifications/telegram.service';
+import { SettingsService } from '../settings/settings.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { ListLeadsDto } from './dto/list-leads.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
@@ -25,6 +27,8 @@ export class LeadsService {
     private readonly prisma: PrismaService,
     private readonly telegram: TelegramService,
     private readonly push: PushService,
+    private readonly email: EmailService,
+    private readonly settings: SettingsService,
   ) {}
 
   async create(dto: CreateLeadDto, ctx: CreateLeadContext) {
@@ -65,12 +69,28 @@ export class LeadsService {
 
     this.logger.log(`Lead created #${lead.id} (${lead.kind}) from ${lead.email}`);
 
-    this.telegram
-      .sendNewLead(lead)
-      .catch((e) => this.logger.warn(`telegram failed: ${String(e)}`));
+    // Push is always sent — it's an admin-side device subscription, not part of
+    // the user-controlled "delivery channel" toggle.
     this.push
       .sendNewLead(lead)
       .catch((e) => this.logger.warn(`push failed: ${String(e)}`));
+
+    // Email / Telegram routing comes from DB settings.
+    this.settings
+      .getNotifications()
+      .then((s) => {
+        if (s.channel === 'telegram' || s.channel === 'both') {
+          this.telegram
+            .sendNewLead(lead, s.telegramChatId)
+            .catch((e) => this.logger.warn(`telegram failed: ${String(e)}`));
+        }
+        if (s.channel === 'email' || s.channel === 'both') {
+          this.email
+            .sendNewLead(lead, s.emailRecipients)
+            .catch((e) => this.logger.warn(`email failed: ${String(e)}`));
+        }
+      })
+      .catch((e) => this.logger.warn(`settings lookup failed: ${String(e)}`));
 
     return { ok: true, id: lead.id };
   }

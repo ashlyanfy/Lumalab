@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Plus,
+  Search as SearchIcon,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -485,6 +486,7 @@ export function PageEditor({ slug }: { slug: string }) {
   const { t, lang } = useLang();
   const qc = useQueryClient();
   const [pickerType, setPickerType] = useState<string>("");
+  const [search, setSearch] = useState("");
 
   const pageQ = useQuery({
     queryKey: ["cms-page", slug],
@@ -532,13 +534,27 @@ export function PageEditor({ slug }: { slug: string }) {
   }
 
   const page = pageQ.data;
-  const blocks = (page.blocks ?? []).slice().sort((a, b) => a.order - b.order);
+  const allBlocks = (page.blocks ?? []).slice().sort((a, b) => a.order - b.order);
+
+  const term = search.trim().toLowerCase();
+  const blocks = term
+    ? allBlocks.filter((b) => {
+        if (b.type.toLowerCase().includes(term)) return true;
+        const schema = findSchema(b.type);
+        if (schema && schema.label[lang].toLowerCase().includes(term)) return true;
+        // search inside string values of data
+        const stringified = JSON.stringify(b.data ?? {}).toLowerCase();
+        return stringified.includes(term);
+      })
+    : allBlocks;
 
   function move(idx: number, dir: -1 | 1) {
-    const next = [...blocks];
-    const target = idx + dir;
-    if (target < 0 || target >= next.length) return;
-    [next[idx], next[target]] = [next[target], next[idx]];
+    // Reorder always operates on the FULL block list, not the search result.
+    const indexInAll = allBlocks.findIndex((b) => b.id === blocks[idx].id);
+    const target = indexInAll + dir;
+    if (indexInAll < 0 || target < 0 || target >= allBlocks.length) return;
+    const next = [...allBlocks];
+    [next[indexInAll], next[target]] = [next[target], next[indexInAll]];
     reorder.mutate(next.map((b, i) => ({ id: b.id, order: i })));
   }
 
@@ -589,22 +605,63 @@ export function PageEditor({ slug }: { slug: string }) {
         </Button>
       </form>
 
+      <div className="relative mb-4">
+        <SearchIcon
+          size={16}
+          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-700/40"
+        />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={
+            lang === "ru"
+              ? "Поиск по типу или содержимому блока…"
+              : "Search by type or block content…"
+          }
+          className="pl-10"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-2 text-xs font-bold text-brand-700/60 hover:bg-brand-50 hover:text-brand-700"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {search && (
+        <p className="mb-3 text-xs text-brand-700/60">
+          {lang === "ru"
+            ? `Найдено: ${blocks.length} из ${allBlocks.length}`
+            : `Found: ${blocks.length} of ${allBlocks.length}`}
+        </p>
+      )}
+
       <div className="space-y-3">
         {blocks.length === 0 && (
           <div className="rounded-[24px] border border-dashed border-[rgba(8,80,135,0.20)] p-8 text-center text-sm text-brand-700/60">
-            {t("noBlocks")}
+            {search
+              ? lang === "ru"
+                ? "По запросу ничего не найдено."
+                : "No blocks match your search."
+              : t("noBlocks")}
           </div>
         )}
-        {blocks.map((b, i) => (
-          <BlockCard
-            key={b.id}
-            slug={slug}
-            block={b}
-            canMoveUp={i > 0}
-            canMoveDown={i < blocks.length - 1}
-            onMove={(dir) => move(i, dir)}
-          />
-        ))}
+        {blocks.map((b, i) => {
+          const indexInAll = allBlocks.findIndex((x) => x.id === b.id);
+          return (
+            <BlockCard
+              key={b.id}
+              slug={slug}
+              block={b}
+              canMoveUp={indexInAll > 0}
+              canMoveDown={indexInAll < allBlocks.length - 1}
+              onMove={(dir) => move(i, dir)}
+            />
+          );
+        })}
       </div>
     </div>
   );

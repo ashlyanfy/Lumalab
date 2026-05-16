@@ -194,8 +194,13 @@ export class TelegramService implements OnModuleInit {
     return Boolean(this.token && this.chatId);
   }
 
-  async sendNewLead(lead: Lead): Promise<void> {
-    if (!this.isEnabled()) return;
+  async sendNewLead(lead: Lead, chatIdOverride?: string): Promise<void> {
+    if (!this.token) return;
+    const chatId =
+      chatIdOverride && chatIdOverride.trim().length > 0
+        ? chatIdOverride.trim()
+        : this.chatId;
+    if (!chatId) return;
 
     const isCompany = lead.kind === 'COMPANY';
     const blocks = isCompany ? COMPANY_BLOCKS : TALENT_BLOCKS;
@@ -239,7 +244,7 @@ export class TelegramService implements OnModuleInit {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chat_id: this.chatId,
+        chat_id: chatId,
         text,
         parse_mode: 'HTML',
         disable_web_page_preview: true,

@@ -179,3 +179,10 @@ model Media {
   size      Int
   createdAt DateTime @default(now())
 }
+
+// Key/value bag for runtime-tunable admin settings (e.g. notification channel).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

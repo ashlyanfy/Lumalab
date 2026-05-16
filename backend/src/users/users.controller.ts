@@ -21,6 +21,9 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
+  // Read-only list is available to MANAGER too — needed for the
+  // assignee-picker on /leads/[id]. Sensitive ops (create/update/delete)
+  // are still ADMIN-only below.
   @Get()
   list() {
     return this.users.list();
