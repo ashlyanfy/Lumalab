@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { BootstrapModule } from './bootstrap/bootstrap.module';
 import { CmsModule } from './cms/cms.module';
 import { LeadsModule } from './leads/leads.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     CmsModule,
     NotificationsModule,
+    BootstrapModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
