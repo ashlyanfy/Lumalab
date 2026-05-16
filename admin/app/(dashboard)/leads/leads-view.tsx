@@ -111,11 +111,13 @@ export function LeadsView() {
 
       {/* Kind tabs */}
       <div className="mb-5 inline-flex rounded-full border border-[rgba(8,80,135,0.10)] bg-white/85 p-1 shadow-[0_12px_28px_rgba(8,80,135,0.08)] backdrop-blur-xl">
-        {([
-          { value: "", label: t("filterAll") },
-          { value: "COMPANY" as LeadKind, label: t("kind_COMPANY") },
-          { value: "TALENT" as LeadKind, label: t("kind_TALENT") },
-        ]).map((tab) => {
+        {(
+          [
+            { value: "", label: t("filterAll") },
+            { value: "COMPANY", label: t("kind_COMPANY") },
+            { value: "TALENT", label: t("kind_TALENT") },
+          ] as { value: LeadKind | ""; label: string }[]
+        ).map((tab) => {
           const active = kind === tab.value;
           return (
             <button
