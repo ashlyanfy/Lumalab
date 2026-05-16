@@ -21,7 +21,6 @@ import { KindBadge, StatusBadge } from "@/components/status-badge";
 
 const PAGE_SIZE = 20;
 
-const KINDS: LeadKind[] = ["COMPANY", "TALENT"];
 const STATUSES: LeadStatus[] = [
   "NEW",
   "IN_PROGRESS",
@@ -110,9 +109,40 @@ export function LeadsView() {
         defaults={{ kind, status, from, to }}
       />
 
+      {/* Kind tabs */}
+      <div className="mb-5 inline-flex rounded-full border border-[rgba(8,80,135,0.10)] bg-white/85 p-1 shadow-[0_12px_28px_rgba(8,80,135,0.08)] backdrop-blur-xl">
+        {([
+          { value: "", label: t("filterAll") },
+          { value: "COMPANY" as LeadKind, label: t("kind_COMPANY") },
+          { value: "TALENT" as LeadKind, label: t("kind_TALENT") },
+        ]).map((tab) => {
+          const active = kind === tab.value;
+          return (
+            <button
+              key={tab.value || "all"}
+              type="button"
+              onClick={() => setKind(tab.value)}
+              className={
+                "h-9 rounded-full px-5 text-sm font-bold transition " +
+                (active
+                  ? "bg-brand-700 text-white shadow-[0_8px_20px_rgba(7,59,102,0.25)]"
+                  : "text-brand-700/70 hover:bg-brand-50")
+              }
+            >
+              {tab.label}
+              {data && active && tab.value !== "" && (
+                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/25 px-1.5 text-[11px] font-bold">
+                  {data.total}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filters */}
       <div className="mb-6 rounded-[26px] border border-[rgba(8,80,135,0.08)] bg-white/85 p-5 shadow-[0_18px_44px_rgba(8,80,135,0.08)] backdrop-blur-xl">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-6">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <div className="relative">
               <SearchIcon
@@ -127,17 +157,6 @@ export function LeadsView() {
               />
             </div>
           </div>
-          <Select
-            value={kind}
-            onChange={(e) => setKind(e.target.value as LeadKind | "")}
-          >
-            <option value="">{t("filterKind")}: {t("filterAll")}</option>
-            {KINDS.map((k) => (
-              <option key={k} value={k}>
-                {t(`kind_${k}` as const)}
-              </option>
-            ))}
-          </Select>
           <Select
             value={status}
             onChange={(e) => setStatus(e.target.value as LeadStatus | "")}

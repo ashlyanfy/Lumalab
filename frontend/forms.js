@@ -1,9 +1,12 @@
-// LumaLab — connect Company/Talent forms to backend /api/v1/leads.
-// Falls back to Netlify submit if backend is unreachable, so we never lose a lead.
+// LumaLab — Company/Talent forms → backend /api/v1/leads.
+// No Netlify fallback: if backend fails, we show an inline error so leads
+// are never silently lost.
 (function () {
   "use strict";
 
-  const API_BASE = (window.LUMALAB_API_BASE || "https://lumalab-backend.up.railway.app/api/v1").replace(/\/$/, "");
+  const API_BASE = (
+    window.LUMALAB_API_BASE || "https://lumalab-backend.up.railway.app/api/v1"
+  ).replace(/\/$/, "");
 
   // Top-level columns the backend expects directly on the Lead row.
   // Everything else is forwarded as nested `data`.
@@ -76,33 +79,71 @@
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(`Backend ${res.status}: ${body || "submission failed"}`);
+      let detail = "";
+      try {
+        const j = await res.json();
+        detail = Array.isArray(j.message) ? j.message.join(", ") : j.message ?? "";
+      } catch {
+        detail = await res.text().catch(() => "");
+      }
+      throw new Error(`HTTP ${res.status}${detail ? ` — ${detail}` : ""}`);
     }
     return res.json();
   }
 
-  function disableSubmit(form, disabled) {
+  function setSubmitting(form, busy) {
     const btn = form.querySelector("button[type=submit], .form-submit");
-    if (btn) btn.disabled = disabled;
+    if (btn) {
+      btn.disabled = busy;
+      btn.style.opacity = busy ? "0.6" : "";
+      btn.style.cursor = busy ? "wait" : "";
+    }
+  }
+
+  function showError(form, message) {
+    let box = form.querySelector(".form-error");
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "form-error";
+      box.style.cssText =
+        "margin-top:14px;padding:12px 16px;border-radius:12px;background:#fee;color:#9b1c1c;font-size:13px;font-weight:500;line-height:1.45";
+      form.appendChild(box);
+    }
+    box.textContent = message;
+  }
+
+  function clearError(form) {
+    const box = form.querySelector(".form-error");
+    if (box) box.remove();
   }
 
   function intercept(formId, kind, topMap) {
     const form = document.getElementById(formId);
     if (!form) return;
+
+    // Defang Netlify-era attributes so a failed submit can't POST to /thank-you.html
+    form.removeAttribute("action");
+    form.removeAttribute("method");
+    form.removeAttribute("data-netlify");
+    form.removeAttribute("netlify-honeypot");
+
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      disableSubmit(form, true);
+      clearError(form);
+      setSubmitting(form, true);
       try {
         await submitToBackend(kind, form, topMap);
-        window.location.href = form.getAttribute("action") || "/thank-you.html";
+        window.location.href = "/thank-you.html";
       } catch (err) {
-        // Fallback: let Netlify capture so we never silently drop a lead.
-        console.warn("[lumalab] backend submit failed, falling back to Netlify:", err);
-        form.submit();
+        console.error("[lumalab] submit failed:", err);
+        const lang = (document.documentElement.lang || "ru").toLowerCase();
+        const msg =
+          lang.startsWith("en")
+            ? "Something went wrong. Please try again in a minute or write to info@lumalab.asia."
+            : "Что-то пошло не так. Попробуйте через минуту или напишите на info@lumalab.asia.";
+        showError(form, msg);
       } finally {
-        // Re-enable after a tick in case navigation didn't happen.
-        setTimeout(() => disableSubmit(form, false), 1500);
+        setSubmitting(form, false);
       }
     });
   }
