@@ -34,6 +34,7 @@ export default function SettingsPage() {
   const [stage, setStage] = useState<Stage>("loading");
   const [vapidKey, setVapidKey] = useState<string>("");
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,6 +42,11 @@ export default function SettingsPage() {
       if (typeof window === "undefined") return;
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         setStage("unsupported");
+        return;
+      }
+      if (location.protocol !== "https:" && location.hostname !== "localhost") {
+        setStage("unsupported");
+        setMsg("Web Push requires HTTPS or localhost.");
         return;
       }
       if (Notification.permission === "denied") {
@@ -57,7 +63,8 @@ export default function SettingsPage() {
         const reg = await navigator.serviceWorker.getRegistration();
         const sub = reg ? await reg.pushManager.getSubscription() : null;
         setStage(sub ? "on" : "off");
-      } catch {
+      } catch (e) {
+        console.error("[push] init failed", e);
         setStage("not-configured");
       }
     })();
@@ -66,19 +73,49 @@ export default function SettingsPage() {
   async function enable() {
     setBusy(true);
     setMsg(null);
+    setStep(null);
     try {
-      const reg =
-        (await navigator.serviceWorker.getRegistration()) ||
-        (await navigator.serviceWorker.register("/sw.js"));
+      // 1. Register / get SW
+      setStep("Регистрируем service worker…");
+      console.log("[push] step 1: register SW");
+      let reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        reg = await navigator.serviceWorker.register("/sw.js");
+      }
+      // 2. Wait until SW is active (subscribe needs activated SW)
+      setStep("Активируем service worker…");
+      console.log("[push] step 2: wait for active SW");
+      if (!reg.active) {
+        await navigator.serviceWorker.ready;
+        reg = (await navigator.serviceWorker.getRegistration()) ?? reg;
+      }
+
+      // 3. Ask permission
+      setStep("Запрашиваем разрешение…");
+      console.log("[push] step 3: ask permission");
       const permission = await Notification.requestPermission();
+      console.log("[push] permission:", permission);
       if (permission !== "granted") {
         setStage(permission === "denied" ? "denied" : "off");
+        setStep(null);
+        if (permission === "default") {
+          setMsg("Вы закрыли диалог не дав разрешение.");
+        }
         return;
       }
+
+      // 4. Subscribe
+      setStep("Подписываемся на push…");
+      console.log("[push] step 4: pushManager.subscribe");
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToBuffer(vapidKey),
       });
+      console.log("[push] subscription created:", sub.endpoint);
+
+      // 5. Save to backend
+      setStep("Сохраняем подписку на сервере…");
+      console.log("[push] step 5: POST /push/subscribe");
       const raw = sub.toJSON();
       await api("/push/subscribe", {
         method: "POST",
@@ -87,9 +124,20 @@ export default function SettingsPage() {
           keys: raw.keys,
         }),
       });
+      console.log("[push] subscription saved to backend");
+
       setStage("on");
+      setStep(null);
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
+      console.error("[push] enable failed", e);
+      const errText =
+        e instanceof Error
+          ? `${e.name}: ${e.message}`
+          : typeof e === "string"
+            ? e
+            : JSON.stringify(e);
+      setMsg(errText);
+      setStep(null);
     } finally {
       setBusy(false);
     }
@@ -191,8 +239,16 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {busy && step && (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-brand-50 px-4 py-3 text-xs font-medium text-brand-700">
+            <Loader2 size={14} className="animate-spin" />
+            {step}
+          </div>
+        )}
         {msg && (
-          <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-xs text-red-700">{msg}</div>
+          <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-xs text-red-700 whitespace-pre-wrap">
+            {msg}
+          </div>
         )}
       </div>
     </div>
