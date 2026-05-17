@@ -1,15 +1,12 @@
 // LumaLab — CMS hydrator.
-// Reads /pages/public/:slug from backend and overrides text/lists in the DOM.
 //
-// Rules:
-//   - <... data-cms-page="home" data-cms-block="hero"> marks a block root.
-//   - inside that root, [data-cms-key="title"] gets its textContent replaced.
-//   - inside that root, [data-cms-list="items"] gets its <li> children replaced
-//     from a string[] array.
-//   - if CMS value is null / undefined / empty string / empty array — the DOM
-//     is left as-is (no clearing). Single source of truth: if you want it
-//     empty on the site, leave the field empty in admin AND clear the HTML.
-//   - SEO meta tags also updated from page.seo when non-empty.
+// Loads /pages/public/:slug and patches the landing in-place:
+//   • [data-cms-key="title"]          → textContent
+//   • [data-cms-list="goodItems"]     → <li> children from string[]
+//   • [data-cms-cards="cards"]        → grid rendered via cms-renderers below
+//   • <head> SEO meta tags from page.seo
+//
+// Empty / missing values DON'T touch the DOM (so manual HTML wins).
 (function () {
   "use strict";
 
@@ -17,6 +14,7 @@
     window.LUMALAB_API_BASE || "https://lumalab-backend.up.railway.app/api/v1"
   ).replace(/\/$/, "");
 
+  // ─── helpers ─────────────────────────────────────────────────────────────
   function isMeaningful(v) {
     if (v == null) return false;
     if (typeof v === "string") return v.trim().length > 0;
@@ -25,19 +23,118 @@
     return true;
   }
 
-  async function fetchPage(slug) {
-    try {
-      const res = await fetch(
-        `${API_BASE}/pages/public/${encodeURIComponent(slug)}`,
-        { headers: { Accept: "application/json" } },
-      );
-      if (!res.ok) return null;
-      return await res.json();
-    } catch {
-      return null;
-    }
+  function escapeHtml(s) {
+    if (s == null) return "";
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
+  // ─── card renderers per landing grid type ────────────────────────────────
+  // Each one accepts the array from CMS, returns an HTML string for innerHTML.
+  const renderers = {
+    // Plain string list → <li>…</li>
+    list(items) {
+      return items
+        .filter(isMeaningful)
+        .map((s) => `<li>${escapeHtml(s)}</li>`)
+        .join("");
+    },
+
+    // Hero badges → <span class="badge">…</span>
+    badges(items) {
+      return items
+        .filter(isMeaningful)
+        .map((s) => `<span class="badge">${escapeHtml(s)}</span>`)
+        .join("");
+    },
+
+    // Formula (model) → numbered mini-cards
+    formula(items) {
+      return items
+        .map(
+          (it) =>
+            `<div class="mini"><span class="num">${escapeHtml(
+              it.num ?? "",
+            )}</span><strong>${escapeHtml(it.title ?? "")}</strong><span>${escapeHtml(
+              it.text ?? "",
+            )}</span></div>`,
+        )
+        .join("");
+    },
+
+    // Value / products / expertise / team / safety / proof → glass icon-cards
+    iconCards(items) {
+      return items
+        .map(
+          (it) =>
+            `<article class="glass"><h3>${escapeHtml(
+              it.title ?? "",
+            )}</h3><p>${escapeHtml(it.text ?? "")}</p></article>`,
+        )
+        .join("");
+    },
+
+    // Process timeline
+    timeline(items) {
+      return items
+        .map(
+          (it, i) =>
+            `<div class="t-step"><span class="t-num">${String(i + 1).padStart(
+              2,
+              "0",
+            )}</span><strong>${escapeHtml(it.title ?? "")}</strong><span>${escapeHtml(
+              it.text ?? "",
+            )}</span></div>`,
+        )
+        .join("");
+    },
+
+    // Cases stats (4 metrics)
+    caseStats(items) {
+      return items
+        .map(
+          (it) =>
+            `<article class="case-stat"><strong>${escapeHtml(
+              it.value ?? "",
+            )}</strong><span>${escapeHtml(it.title ?? "")}</span><small>${escapeHtml(
+              it.text ?? "",
+            )}</small></article>`,
+        )
+        .join("");
+    },
+
+    // Cases method (6 numbered steps)
+    caseMethod(items) {
+      return items
+        .map(
+          (it) =>
+            `<div class="case-step"><span class="num">${escapeHtml(
+              it.num ?? "",
+            )}</span><strong>${escapeHtml(it.title ?? "")}</strong><span>${escapeHtml(
+              it.text ?? "",
+            )}</span></div>`,
+        )
+        .join("");
+    },
+
+    // Filter tags (vacancies)
+    filters(items) {
+      return items
+        .filter(isMeaningful)
+        .map(
+          (s, i) =>
+            `<button type="button" class="filter ${i === 0 ? "active" : ""}" data-filter="${escapeHtml(
+              s,
+            )}">${escapeHtml(s)}</button>`,
+        )
+        .join("");
+    },
+  };
+
+  // ─── apply one block to the DOM ──────────────────────────────────────────
   function applyBlock(pageSlug, block) {
     const roots = document.querySelectorAll(
       `[data-cms-page="${pageSlug}"][data-cms-block="${block.type}"]`,
@@ -55,22 +152,32 @@
           return;
         }
 
-        // Array of strings → replace <ul>/<ol> children on [data-cms-list]
-        if (Array.isArray(value) && value.every((it) => typeof it === "string")) {
-          const list = root.querySelector(`[data-cms-list="${key}"]`);
-          if (list) {
-            list.innerHTML = "";
-            value.forEach((it) => {
-              if (!isMeaningful(it)) return;
-              const li = document.createElement("li");
-              li.textContent = it;
-              list.appendChild(li);
-            });
+        // Array → either string list, or array of card-objects
+        if (Array.isArray(value)) {
+          // String[]: <li> render OR named renderer
+          if (value.every((it) => typeof it === "string")) {
+            const namedTarget = root.querySelector(`[data-cms-render="${key}"]`);
+            if (namedTarget) {
+              const r = namedTarget.getAttribute("data-cms-render-as");
+              const fn = renderers[r] || renderers.list;
+              namedTarget.innerHTML = fn(value);
+              return;
+            }
+            const list = root.querySelector(`[data-cms-list="${key}"]`);
+            if (list) {
+              list.innerHTML = renderers.list(value);
+            }
+            return;
           }
-          return;
-        }
 
-        // (Cards / nested objects — reserved for app.js integration later.)
+          // Array of objects → named renderer
+          const cardTarget = root.querySelector(`[data-cms-render="${key}"]`);
+          if (cardTarget) {
+            const r = cardTarget.getAttribute("data-cms-render-as") || "iconCards";
+            const fn = renderers[r] || renderers.iconCards;
+            cardTarget.innerHTML = fn(value);
+          }
+        }
       });
     });
   }
@@ -96,11 +203,26 @@
     setMeta('meta[property="og:image"]', seo.ogImage);
   }
 
+  async function fetchPage(slug) {
+    try {
+      const res = await fetch(
+        `${API_BASE}/pages/public/${encodeURIComponent(slug)}`,
+        { headers: { Accept: "application/json" } },
+      );
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
   async function hydratePage(slug) {
     const page = await fetchPage(slug);
     if (!page) return;
     applySeo(page.seo);
     (page.blocks || []).forEach((block) => applyBlock(slug, block));
+    // Tell app.js that CMS is done, in case it wants to re-bind filters etc.
+    document.dispatchEvent(new CustomEvent("lumalab:cms-applied"));
   }
 
   function init() {

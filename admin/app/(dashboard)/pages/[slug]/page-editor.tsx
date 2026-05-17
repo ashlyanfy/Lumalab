@@ -13,10 +13,13 @@ import {
 import { api } from "@/lib/api";
 import { useLang, type Lang } from "@/lib/i18n";
 import {
+  CATEGORIES,
   HOME_BLOCKS,
   findSchema,
+  schemasByCategory,
   type BlockSchema,
   type CardField,
+  type Category,
   type Field,
 } from "@/lib/cms-schema";
 import type { CmsBlock, CmsPage } from "@/lib/types";
@@ -487,6 +490,7 @@ export function PageEditor({ slug }: { slug: string }) {
   const qc = useQueryClient();
   const [pickerType, setPickerType] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [activeCat, setActiveCat] = useState<Category | "ALL">("ALL");
 
   const pageQ = useQuery({
     queryKey: ["cms-page", slug],
@@ -521,10 +525,21 @@ export function PageEditor({ slug }: { slug: string }) {
     return new Set((pageQ.data?.blocks ?? []).map((b) => b.type));
   }, [pageQ.data]);
 
-  const availableSchemas = useMemo(
-    () => HOME_BLOCKS.filter((s) => !usedTypes.has(s.type)),
-    [usedTypes],
-  );
+  const availableSchemas = useMemo(() => {
+    const pool =
+      activeCat === "ALL" ? HOME_BLOCKS : schemasByCategory(activeCat);
+    return pool.filter((s) => !usedTypes.has(s.type));
+  }, [usedTypes, activeCat]);
+
+  // Count blocks per category for the tab badges.
+  const countsByCat = useMemo(() => {
+    const m = new Map<Category, number>();
+    for (const b of pageQ.data?.blocks ?? []) {
+      const s = findSchema(b.type);
+      if (s) m.set(s.category, (m.get(s.category) ?? 0) + 1);
+    }
+    return m;
+  }, [pageQ.data]);
 
   if (pageQ.isLoading) {
     return <div className="text-sm text-brand-700/60">{t("loading")}</div>;
@@ -537,16 +552,22 @@ export function PageEditor({ slug }: { slug: string }) {
   const allBlocks = (page.blocks ?? []).slice().sort((a, b) => a.order - b.order);
 
   const term = search.trim().toLowerCase();
-  const blocks = term
-    ? allBlocks.filter((b) => {
-        if (b.type.toLowerCase().includes(term)) return true;
-        const schema = findSchema(b.type);
-        if (schema && schema.label[lang].toLowerCase().includes(term)) return true;
-        // search inside string values of data
-        const stringified = JSON.stringify(b.data ?? {}).toLowerCase();
-        return stringified.includes(term);
-      })
-    : allBlocks;
+  const blocks = allBlocks.filter((b) => {
+    // Category filter
+    if (activeCat !== "ALL") {
+      const s = findSchema(b.type);
+      if (!s || s.category !== activeCat) return false;
+    }
+    // Text search
+    if (term) {
+      if (b.type.toLowerCase().includes(term)) return true;
+      const schema = findSchema(b.type);
+      if (schema && schema.label[lang].toLowerCase().includes(term)) return true;
+      const stringified = JSON.stringify(b.data ?? {}).toLowerCase();
+      if (!stringified.includes(term)) return false;
+    }
+    return true;
+  });
 
   function move(idx: number, dir: -1 | 1) {
     // Reorder always operates on the FULL block list, not the search result.
@@ -572,6 +593,65 @@ export function PageEditor({ slug }: { slug: string }) {
             </h1>
           </div>
         </div>
+      </div>
+
+      {/* Category tabs — match landing navigation */}
+      <div className="mb-5 flex flex-wrap gap-1.5 rounded-full border border-[rgba(8,80,135,0.10)] bg-white/85 p-1.5 shadow-[0_12px_28px_rgba(8,80,135,0.06)] backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={() => {
+            setActiveCat("ALL");
+            setPickerType("");
+          }}
+          className={
+            "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-bold transition " +
+            (activeCat === "ALL"
+              ? "bg-brand-700 text-white shadow-[0_6px_16px_rgba(6,59,102,0.25)]"
+              : "text-brand-700/70 hover:bg-brand-50")
+          }
+        >
+          {lang === "ru" ? "Все" : "All"}
+          <span
+            className={
+              "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] " +
+              (activeCat === "ALL" ? "bg-white/25" : "bg-brand-50")
+            }
+          >
+            {allBlocks.length}
+          </span>
+        </button>
+        {CATEGORIES.map((cat) => {
+          const active = activeCat === cat.key;
+          const count = countsByCat.get(cat.key) ?? 0;
+          return (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => {
+                setActiveCat(cat.key);
+                setPickerType("");
+              }}
+              className={
+                "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-bold transition " +
+                (active
+                  ? "bg-brand-700 text-white shadow-[0_6px_16px_rgba(6,59,102,0.25)]"
+                  : "text-brand-700/70 hover:bg-brand-50")
+              }
+            >
+              {cat.label[lang]}
+              {count > 0 && (
+                <span
+                  className={
+                    "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] " +
+                    (active ? "bg-white/25" : "bg-brand-50")
+                  }
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <form

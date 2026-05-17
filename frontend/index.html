@@ -54,7 +54,7 @@
           <a class="btn primary" href="#application" data-i18n="hero.primary" data-cms-key="primaryCta">Передать продукт на закрытое исследование</a>
           <a class="btn secondary" href="#safety" data-i18n="hero.secondary" data-cms-key="secondaryCta">Обсудить партнёрство под NDA</a>
         </div>
-        <div class="badges" id="badges"></div>
+        <div class="badges" id="badges" data-cms-render="badges" data-cms-render-as="badges"></div>
       </div>
     </section>
 
@@ -89,7 +89,7 @@
         <span class="eyebrow" data-i18n="model.eyebrow" data-cms-key="eyebrow">Модель партнёрства</span>
         <h2 data-i18n="model.title" data-cms-key="title">Заходим как growth-партнёр, когда видим реальный потенциал роста</h2>
         <p data-i18n="model.text" data-cms-key="text">LumaLab не работает как обычный подрядчик на часы. Мы подключаем экспертизу, технологии, исследования и команду только там, где можем создать измеримую ценность для продукта и компании.</p>
-        <div class="formula" id="formulaGrid"></div>
+        <div class="formula" id="formulaGrid" data-cms-render="formula" data-cms-render-as="formula"></div>
       </div>
     </section>
 
@@ -164,7 +164,7 @@
         <p data-i18n="safety.text" data-cms-key="text">Сначала смотрим общую картину: продукт, рынок, пользовательский путь, команду, ограничения и ожидаемый результат. Детали архитектуры, метрик, договоров и собственных разработок раскрываются только после NDA.</p>
         <div class="notice"><strong>NDA</strong><span data-i18n="safety.notice" data-cms-key="notice">Конфиденциальность защищает партнёров, действующие проекты и собственные цифровые продукты LumaLab.</span></div>
       </div>
-      <div class="cards-grid wide" id="safetySteps"></div>
+      <div class="cards-grid wide" id="safetySteps" data-cms-render="steps" data-cms-render-as="iconCards"></div>
     </section>
 
     <section class="section feature scenic" id="products" data-cms-page="home" data-cms-block="products">
@@ -174,7 +174,7 @@
         <h2 data-i18n="products.title" data-cms-key="title">Мы не только консультируем. Мы сами развиваем цифровые продукты и AI-инструменты</h2>
         <p data-i18n="products.text" data-cms-key="text">Часть решений создаётся совместно с партнёрами и участниками проектов. Поэтому названия, архитектура, метрики, договорные условия и состав участников раскрываются только после подписания NDA.</p>
       </div>
-      <div class="cards-grid wide" id="productsGrid"></div>
+      <div class="cards-grid wide" id="productsGrid" data-cms-render="cards" data-cms-render-as="iconCards"></div>
     </section>
 
     <section class="section feature reverse scenic" id="expertise" data-cms-page="home" data-cms-block="expertise">
@@ -184,7 +184,7 @@
         <h2 data-i18n="expertise.title" data-cms-key="title">Стратегия, AI, данные, дизайн и engineering в одной команде роста</h2>
         <p data-i18n="expertise.text" data-cms-key="text">Мы собираем вокруг продукта не набор разрозненных услуг, а прикладную систему роста: от диагностики до внедрения и масштабирования.</p>
       </div>
-      <div class="cards-grid wide" id="servicesGrid"></div>
+      <div class="cards-grid wide" id="servicesGrid" data-cms-render="services" data-cms-render-as="iconCards"></div>
     </section>
 
 
@@ -195,20 +195,20 @@
         <p data-i18n="cases.subtitle" data-cms-key="subtitle">Мы добавили кейсы так, чтобы они работали как сильный блок доверия для инвесторов и крупных компаний: цифры, контекст, польза и понятный следующий шаг после NDA.</p>
       </div>
       <div class="cases-hero-container reveal" style="background-image:url('/assets/cases-proof.webp')">
-        <div class="case-stats" id="caseStats"></div>
+        <div class="case-stats" id="caseStats" data-cms-render="stats" data-cms-render-as="caseStats"></div>
       </div>
       <div class="cases-grid" id="casesGrid"></div>
       <div class="proof-panel reveal">
         <h3 data-i18n="cases.proofTitle" data-cms-key="proofTitle">Почему этот блок усиливает доверие</h3>
         <p data-i18n="cases.proofText" data-cms-key="proofText">Крупной компании важно видеть не обещание, а зрелость команды: опыт в продажах, CRM, AI, интерфейсах, аналитике, B2B и быстрых циклах роста. Поэтому кейсы собраны вокруг измеримых результатов и безопасно раскрываются без нарушения NDA.</p>
-        <div class="proof-grid" id="proofGrid"></div>
+        <div class="proof-grid" id="proofGrid" data-cms-render="proofCards" data-cms-render-as="iconCards"></div>
       </div>
       <div class="case-method reveal">
         <div class="case-method-head">
           <span class="eyebrow" data-i18n="cases.methodEyebrow" data-cms-key="methodEyebrow">Метод LumaLab</span>
           <h3 data-i18n="cases.methodTitle" data-cms-key="methodTitle">Мы видим продукт как живую систему: клиент, данные, скорость, доверие и рост стоимости</h3>
         </div>
-        <div class="case-method-grid" id="caseMethodGrid"></div>
+        <div class="case-method-grid" id="caseMethodGrid" data-cms-render="methodSteps" data-cms-render-as="caseMethod"></div>
       </div>
     </section>
 
@@ -218,7 +218,7 @@
         <span class="eyebrow" data-i18n="research.eyebrow" data-cms-key="eyebrow">Исследования и тренды</span>
         <h2 data-i18n="research.title" data-cms-key="title">Ежедневно изучаем рынки, технологии и компании быстрого роста</h2>
         <p data-i18n="research.text" data-cms-key="text">База знаний LumaLab обновляется через исследования и практику. Это помогает приносить в продукты не вчерашние идеи, а живые точки роста.</p>
-        <ul class="check-list" id="researchList"></ul>
+        <ul class="check-list" id="researchList" data-cms-list="items"></ul>
       </div>
     </section>
 
@@ -230,7 +230,7 @@
       </div>
       <div class="process-wrap reveal">
         <img src="/assets/process-roadmap.webp" alt="Этапы работы LumaLab" loading="lazy" />
-        <div class="timeline" id="processTimeline"></div>
+        <div class="timeline" id="processTimeline" data-cms-render="steps" data-cms-render-as="timeline"></div>
       </div>
     </section>
 
@@ -242,7 +242,7 @@
         <p data-i18n="team.text" data-cms-key="text">Мы соединяем предпринимательское мышление, исследовательскую глубину и инженерную точность. Имена, роли и опыт по закрытым проектам раскрываются после NDA, если это не нарушает обязательства перед партнёрами.</p>
         <div class="notice"><strong>NDA</strong><span data-i18n="team.nda" data-cms-key="nda">Кейсы, цифры, архитектуры решений и детали собственных продуктов раскрываются только в защищённом контуре.</span></div>
       </div>
-      <div class="cards-grid wide" id="teamGrid"></div>
+      <div class="cards-grid wide" id="teamGrid" data-cms-render="members" data-cms-render-as="iconCards"></div>
     </section>
 
     <section class="section scenic" id="vacancies" data-cms-page="home" data-cms-block="vacancies">
@@ -262,7 +262,7 @@
           <ul id="candidateBad" data-cms-list="badItems"></ul>
         </article>
       </div>
-      <div class="filter-bar reveal" id="jobFilters"></div>
+      <div class="filter-bar reveal" id="jobFilters" data-cms-render="filters" data-cms-render-as="filters"></div>
       <div class="cards-grid jobs" id="jobsGrid"></div>
       <div class="center-actions jobs-action reveal">
         <a class="btn primary" href="#application" data-open-tab="talent" data-i18n="jobs.apply" data-cms-key="applyCta">Заполнить анкету специалиста</a>
