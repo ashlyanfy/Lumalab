@@ -45,9 +45,24 @@ export class EmailService implements OnModuleInit {
       port,
       secure: port === 465,
       auth: { user, pass },
+      // Fail fast if Railway egress is blocking the SMTP port,
+      // instead of hanging the request for 60+ seconds silently.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
     });
     this.from = from;
     this.logger.log(`Email configured (${host}:${port}, from=${from})`);
+
+    // Verify the connection on boot — surfaces SMTP / DNS issues immediately.
+    this.transporter
+      .verify()
+      .then(() => this.logger.log('Email SMTP connection verified ✓'))
+      .catch((e) =>
+        this.logger.warn(
+          `Email SMTP verify failed: ${(e as Error).message ?? String(e)}`,
+        ),
+      );
   }
 
   isEnabled(): boolean {
