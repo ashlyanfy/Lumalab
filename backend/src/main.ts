@@ -1,6 +1,12 @@
+import * as dns from 'dns';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+
+// Railway's egress doesn't route IPv6 outbound — force Node to prefer IPv4
+// so outgoing SMTP (mail.ru, Yandex, Gmail) and other API calls don't fail
+// with ENETUNREACH on AAAA records.
+dns.setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
