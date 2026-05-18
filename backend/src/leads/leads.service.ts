@@ -79,14 +79,29 @@ export class LeadsService {
     this.settings
       .getNotifications()
       .then((s) => {
+        this.logger.log(
+          `notify channel=${s.channel} · tg=${s.telegramChatId ? 'override' : 'env'} · email=${s.emailRecipients || 'env'}`,
+        );
+
+        if (s.channel === 'off') {
+          this.logger.warn(
+            `delivery channel is OFF — no telegram/email will be sent for lead #${lead.id}`,
+          );
+          return;
+        }
+
         if (s.channel === 'telegram' || s.channel === 'both') {
+          this.logger.log(`→ sending telegram for #${lead.id}`);
           this.telegram
             .sendNewLead(lead, s.telegramChatId)
+            .then(() => this.logger.log(`telegram OK #${lead.id}`))
             .catch((e) => this.logger.warn(`telegram failed: ${String(e)}`));
         }
         if (s.channel === 'email' || s.channel === 'both') {
+          this.logger.log(`→ sending email for #${lead.id}`);
           this.email
             .sendNewLead(lead, s.emailRecipients)
+            .then(() => this.logger.log(`email OK #${lead.id}`))
             .catch((e) => this.logger.warn(`email failed: ${String(e)}`));
         }
       })
