@@ -1,9 +1,12 @@
-const CACHE_NAME = 'lumalab-pwa-v7';
+const CACHE_NAME = 'lumalab-pwa-v8';
 const ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/cms.js',
+  '/forms.js',
+  '/analytics.js',
   '/manifest.webmanifest',
   '/offline.html',
   '/thank-you.html',

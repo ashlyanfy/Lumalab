@@ -133,9 +133,17 @@
       setSubmitting(form, true);
       try {
         await submitToBackend(kind, form, topMap);
+        document.dispatchEvent(
+          new CustomEvent("lumalab:form-success", { detail: { kind } })
+        );
         window.location.href = "/thank-you.html";
       } catch (err) {
         console.error("[lumalab] submit failed:", err);
+        document.dispatchEvent(
+          new CustomEvent("lumalab:form-error", {
+            detail: { kind, message: err && err.message },
+          })
+        );
         const lang = (document.documentElement.lang || "ru").toLowerCase();
         const msg =
           lang.startsWith("en")
