@@ -11,10 +11,14 @@ function escapeHtml(s: string | number | null | undefined): string {
     .replace(/>/g, '&gt;');
 }
 
+type Backend = 'resend' | 'smtp' | 'none';
+
 @Injectable()
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
+  private backend: Backend = 'none';
   private transporter: nodemailer.Transporter | null = null;
+  private resendApiKey = '';
   private from = '';
   private envTo = '';
   private adminBase = '';
@@ -22,39 +26,52 @@ export class EmailService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
+    this.envTo = this.config.get<string>('MAIL_TO') ?? '';
+    this.adminBase = this.config.get<string>('ADMIN_BASE_URL') ?? '';
+    const fromEnv = this.config.get<string>('MAIL_FROM') ?? '';
+
+    // Prefer Resend (HTTP API) — it bypasses Railway's SMTP egress blocks
+    // that affect mail.ru / Yandex / Gmail SMTP outbound.
+    const resendKey = this.config.get<string>('RESEND_API_KEY');
+    if (resendKey) {
+      this.resendApiKey = resendKey;
+      this.from = fromEnv || 'onboarding@resend.dev';
+      this.backend = 'resend';
+      this.logger.log(`Email configured via Resend (from=${this.from})`);
+      return;
+    }
+
+    // Fallback: classic SMTP (works on hosts that allow outbound SMTP).
     const host = this.config.get<string>('SMTP_HOST');
     const portStr = this.config.get<string>('SMTP_PORT');
     const user = this.config.get<string>('SMTP_USER');
     const pass =
-      this.config.get<string>('SMTP_PASSWORD') ?? this.config.get<string>('SMTP_PASS');
-    const from = this.config.get<string>('MAIL_FROM') ?? user ?? '';
-    this.envTo = this.config.get<string>('MAIL_TO') ?? '';
-    this.adminBase = this.config.get<string>('ADMIN_BASE_URL') ?? '';
+      this.config.get<string>('SMTP_PASSWORD') ??
+      this.config.get<string>('SMTP_PASS');
 
     if (!host || !user || !pass) {
       const missing: string[] = [];
-      if (!host) missing.push('SMTP_HOST');
+      if (!resendKey && !host) missing.push('RESEND_API_KEY or SMTP_HOST');
       if (!user) missing.push('SMTP_USER');
       if (!pass) missing.push('SMTP_PASSWORD');
       this.logger.warn(`Email disabled — missing env: ${missing.join(', ')}`);
       return;
     }
+
     const port = Number(portStr ?? 587);
     this.transporter = nodemailer.createTransport({
       host,
       port,
       secure: port === 465,
       auth: { user, pass },
-      // Fail fast if Railway egress is blocking the SMTP port,
-      // instead of hanging the request for 60+ seconds silently.
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 20_000,
     });
-    this.from = from;
-    this.logger.log(`Email configured (${host}:${port}, from=${from})`);
+    this.from = fromEnv || user;
+    this.backend = 'smtp';
+    this.logger.log(`Email configured via SMTP (${host}:${port}, from=${this.from})`);
 
-    // Verify the connection on boot — surfaces SMTP / DNS issues immediately.
     this.transporter
       .verify()
       .then(() => this.logger.log('Email SMTP connection verified ✓'))
@@ -66,12 +83,12 @@ export class EmailService implements OnModuleInit {
   }
 
   isEnabled(): boolean {
-    return this.transporter !== null;
+    return this.backend !== 'none';
   }
 
-  /** Send a new-lead notification to one or many recipients (comma-separated override or env). */
+  /** Send a new-lead notification to one or many recipients. */
   async sendNewLead(lead: Lead, recipientsOverride?: string): Promise<void> {
-    if (!this.transporter) return;
+    if (this.backend === 'none') return;
     const to = (recipientsOverride && recipientsOverride.trim().length > 0
       ? recipientsOverride
       : this.envTo
@@ -93,13 +110,37 @@ export class EmailService implements OnModuleInit {
     const html = this.renderHtml(lead);
     const text = this.renderText(lead);
 
-    await this.transporter.sendMail({
-      from: this.from,
-      to,
-      subject,
-      text,
-      html,
-    });
+    if (this.backend === 'resend') {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: this.from,
+          to,
+          subject,
+          html,
+          text,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`Resend ${res.status}: ${body}`);
+      }
+      return;
+    }
+
+    if (this.backend === 'smtp' && this.transporter) {
+      await this.transporter.sendMail({
+        from: this.from,
+        to,
+        subject,
+        text,
+        html,
+      });
+    }
   }
 
   private renderHtml(lead: Lead): string {
