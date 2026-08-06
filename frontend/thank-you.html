@@ -1,26 +1,69 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Спасибо | LumaLab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Спасибо, заявка получена | LumaLab</title>
   <meta name="theme-color" content="#F6FAFF" />
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="https://lumalab.asia/" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <main class="section contact scenic" id="contacts" style="min-height:100svh;display:grid;place-items:center;">
-    <div class="contact-card reveal visible">
-      <span class="eyebrow">Заявка получена</span>
-      <h1 style="font-size:clamp(42px,6vw,72px);">Спасибо</h1>
-      <p>Мы получили анкету. Если совпадение сильное, следующий шаг — короткий созвон, NDA и закрытая диагностика.</p>
+  <div class="ambient" aria-hidden="true"></div>
+
+  <main class="thankyou">
+    <div class="thankyou-card reveal visible">
+      <img class="thankyou-logo" src="/assets/lumalab-logo.png" alt="LumaLab" />
+
+      <div class="thankyou-check" aria-hidden="true">
+        <svg viewBox="0 0 52 52" focusable="false"><path d="M14 27 l8 8 l16 -18" /></svg>
+      </div>
+
+      <span class="eyebrow" data-t="eyebrow">Заявка получена</span>
+      <h1 data-t="title">Спасибо</h1>
+      <p data-t="text">Мы получили вашу анкету. Если совпадение сильное, следующий шаг — короткий созвон, NDA и закрытая диагностика продукта.</p>
+
+      <div class="thankyou-steps" aria-hidden="false">
+        <span data-t="step1">Созвон</span>
+        <span data-t="step2">NDA</span>
+        <span data-t="step3">Закрытая диагностика</span>
+      </div>
+
       <div class="hero-actions center-actions">
-        <a class="btn primary" href="/">Вернуться на сайт</a>
-        <a class="btn secondary" href="mailto:hello@lumalab.ai">hello@lumalab.ai</a>
+        <a class="btn primary" href="/" data-t="primary">Вернуться на сайт</a>
+        <a class="btn secondary" href="https://wa.me/77000000000" target="_blank" rel="noreferrer" data-t="secondary">Написать в WhatsApp</a>
       </div>
     </div>
   </main>
+
+  <!-- Локализация RU/EN — тот же ключ языка, что и на сайте -->
+  <script>
+    (function () {
+      var lang = (localStorage.getItem("lumalab-lang") || "ru").slice(0, 2);
+      if (lang !== "en") return;
+      document.documentElement.lang = "en";
+      document.title = "Thank you — application received | LumaLab";
+      var en = {
+        eyebrow: "Application received",
+        title: "Thank you",
+        text: "We’ve received your application. If it’s a strong fit, the next step is a short call, an NDA and a private product diagnostic.",
+        step1: "Call",
+        step2: "NDA",
+        step3: "Private diagnostic",
+        primary: "Back to site",
+        secondary: "Message on WhatsApp"
+      };
+      document.querySelectorAll("[data-t]").forEach(function (el) {
+        var k = el.getAttribute("data-t");
+        if (en[k]) el.textContent = en[k];
+      });
+    })();
+  </script>
+
   <!-- GA4 — тот же Measurement ID, что и в index.html -->
   <script>window.LUMALAB_GA_ID = "G-RP43CK348E";</script>
-  <script src="/analytics.js?v=8" defer></script>
+  <script src="/analytics.js" defer></script>
 </body>
 </html>

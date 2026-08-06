@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://beautiful-paletas-ed6190.netlify.app/sitemap.xml
+Host: https://lumalab.asia
+Sitemap: https://lumalab.asia/sitemap.xml
