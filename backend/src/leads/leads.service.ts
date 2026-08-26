@@ -8,6 +8,7 @@ import { LeadKind, LeadStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../notifications/email.service';
 import { PushService } from '../notifications/push.service';
+import { SenderService } from '../notifications/sender.service';
 import { TelegramService } from '../notifications/telegram.service';
 import { SettingsService } from '../settings/settings.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -28,6 +29,7 @@ export class LeadsService {
     private readonly telegram: TelegramService,
     private readonly push: PushService,
     private readonly email: EmailService,
+    private readonly sender: SenderService,
     private readonly settings: SettingsService,
   ) {}
 
@@ -74,6 +76,14 @@ export class LeadsService {
     this.push
       .sendNewLead(lead)
       .catch((e) => this.logger.warn(`push failed: ${String(e)}`));
+
+    // Sender.net: лид → подписчик рассылки (не блокирует ответ клиенту).
+    this.sender
+      .syncLead(lead)
+      .then(() => {
+        if (this.sender.isEnabled()) this.logger.log(`sender.net sync OK #${lead.id}`);
+      })
+      .catch((e) => this.logger.warn(`sender.net sync failed: ${String(e)}`));
 
     // Email / Telegram routing comes from DB settings.
     this.settings
